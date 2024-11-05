@@ -29,6 +29,7 @@ class test_component(unittest.TestCase):
         with self.assertRaises(ValueError):
             self.c0.add_edge((3, 4))
 
+
         self.assertEqual(self.c0.mst, [])
     def test_edge_two_nodes_in_C(self):
         self.c0.add_edge((0, 1))

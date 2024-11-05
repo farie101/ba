@@ -21,28 +21,44 @@ class Component:
         if u_rep == v_rep:
             raise ValueError(f"Both {u} and {v} are already in the same component.")
 
-        if u_rep != self.representative and v_rep != self.representative:
-            raise ValueError(f"Neither of {u} and {v} are in the component.")
+        # Get the components before union
+        comp_u = self.S[u_rep]
+        comp_v = self.S[v_rep]
 
-        if u_rep == self.representative:
-            other_node = v
-        else:
-            other_node = u
+        # Determine which component is larger
+        size_u = len(comp_u.nodes)
+        size_v = len(comp_v.nodes)
 
         self.mst.append(edge)
         self.max_edge_in_mst = edge
 
-        other_rep = self.unionfind.find(other_node)
-        other_component = self.S[other_rep]
-        self.unionfind.union(u, v)
-        self.merge(other_component)
+        # Perform union
+        new_rep = self.unionfind.union(u, v)
 
+        # Merge smaller component into larger one
+        if size_u >= size_v:
+            larger_comp = comp_u
+            smaller_comp = comp_v
+        else:
+            larger_comp = comp_v
+            smaller_comp = comp_u
 
+        # Update the component map with the new representative
+        self.S[new_rep] = larger_comp
+        larger_comp.merge(smaller_comp)
 
-        print(f"Inhalt von S nach Hinzufügen der Kante {u}-{v}: {[k for k in self.S.keys()]}")
-        print(f"Union-Find Eltern: {self.unionfind.parent}")
+    def merge(self, smaller_comp):
+        """
+        Merge smaller component into this one
+        """
+        # Update nodes and MST
+        self.nodes.update(smaller_comp.nodes)
+        self.mst.extend(smaller_comp.mst)
 
+        # Delete the smaller component from S
+        self.__delete__(smaller_comp)
 
+       # print(f"After merge - Representative: {self.representative}, Nodes: {self.nodes}")
 
     def get_max_edge_weight(self):
         if self.max_edge_in_mst:
@@ -50,16 +66,7 @@ class Component:
             return self.graph[u][v]['weight']
         return 0
 
-    def merge(self, C2):
 
-        # Ensure self is the larger component by swapping if necessary
-        if len(self.nodes) < len(C2.nodes):
-            self, C2 = C2, self
-
-        # Update self to include all nodes and edges from C2
-        self.nodes.update(C2.nodes)
-        self.mst.extend(C2.mst)
-        self.__delete__(C2)
 
     def __delete__(self, C2):
         # Remove C2's representative entry from S if it exists
